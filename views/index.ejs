@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Chatroom</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .room-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .room-list li {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4); /* Pinkish Gradient */
+    color: #333;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.room-list li:hover {
+    background: linear-gradient(135deg, #ff758c, #ff7eb3); /* Slightly darker gradient */
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create or Join a Chatroom</h2>
+        <form id="chat-form">
+            <input type="text" id="room" name="room" placeholder="Enter chatroom name" required>
+            <button type="submit">Join Chat</button>
+        </form>
+
+        <h2>Available Chatrooms</h2>
+        <ul class="room-list">
+            <% rooms.forEach(room => { %>
+                <li onclick="joinRoom('<%= room %>')"><%= room %></li>
+            <% }); %>
+        </ul>
+        <ul>
+            <% rooms.forEach(room => { %>
+                <li>
+                    <a href="/chat/<%= room %>"><%= room %></a>
+                    <button onclick="deleteRoom('<%= room %>')">❌ Delete</button>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
+    <script>
+        const socket = io();
+
+        document.getElementById("chat-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const room = document.getElementById("room").value.trim();
+            if (room) {
+                window.location.href = `/chat/${room}`;
+            }
+        });
+
+        function deleteRoom(roomName) {
+        fetch(`/delete-room/${roomName}`, { method: "DELETE" })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload(); // Refresh page to update the room list
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+    }
+
+        function joinRoom(room) {
+            const username = prompt("Enter your name:");
+            if (username) {
+                window.location.href = `/chat/${room}`;
+            }
+        }
+
+        socket.on("updateRooms", (rooms) => {
+            const roomList = document.querySelector(".room-list");
+            roomList.innerHTML = "";
+            rooms.forEach(room => {
+                const li = document.createElement("li");
+                li.textContent = room;
+                li.onclick = () => joinRoom(room);
+                roomList.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
