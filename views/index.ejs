@@ -96,14 +96,7 @@
                 <li onclick="joinRoom('<%= room %>')"><%= room %></li>
             <% }); %>
         </ul>
-        <ul>
-            <% rooms.forEach(room => { %>
-                <li>
-                    <a href="/chat/<%= room %>"><%= room %></a>
-                    <button onclick="deleteRoom('<%= room %>')">❌ Delete</button>
-                </li>
-            <% }) %>
-        </ul>
+    
     </div>
 
     <script>
@@ -117,18 +110,6 @@
             }
         });
 
-        function deleteRoom(roomName) {
-        fetch(`/delete-room/${roomName}`, { method: "DELETE" })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload(); // Refresh page to update the room list
-                } else {
-                    alert("Error: " + data.message);
-                }
-            });
-    }
 
         function joinRoom(room) {
             const username = prompt("Enter your name:");
