@@ -41,15 +41,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
     res.status(400).json({ error: "File upload failed" });
 });
 
-app.delete("/delete-room/:room", (req, res) => {
-    const room = req.params.room;
-    if (chatRooms[room]) {
-        delete chatRooms[room];
-        io.emit("updateRooms", Object.keys(chatRooms)); // Notify all users
-        return res.json({ success: true, message: `Room '${room}' deleted.` });
-    }
-    res.status(404).json({ success: false, message: "Room not found" });
-});
+
 
 
 io.on("connection", (socket) => {
