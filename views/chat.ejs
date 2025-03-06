@@ -1,245 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatroom: <%= room %></title>
+    <title>Chatroom: <%= room %>
+    </title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-       * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-body { display: flex; flex-direction: column; align-items: center; height: 100vh; background: #f0f0f0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
 
-.chat-container {
-    width: 90%; max-width: 500px;
-    background: white; color: black;
-    border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    display: flex; flex-direction: column;
-    height: 80vh;
-    position: fixed; /* Prevent dragging on mobile */
-    top: 10vh;
-}
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background: #f0f0f0;
+        }
 
-#messages {
-    flex: 1; overflow-y: auto; padding: 10px;
-    border-bottom: 1px solid #ddd; background: #f9f9f9;
-    display: flex; flex-direction: column;
-}
+        .chat-container {
+            width: 90%;
+            max-width: 500px;
+            background: white;
+            color: black;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            position: fixed;
+            /* Prevent dragging on mobile */
+            top: 10vh;
+        }
 
-.message {
-    max-width: 75%; padding: 8px 12px; border-radius: 10px;
-    margin: 5px; display: inline-block;
-    word-wrap: break-word;
-}
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+        }
 
-.self { background: #dcf8c6; align-self: flex-end; }
-.other { background: #eaeaea; align-self: flex-start; }
-.username { font-weight: bold; color: #007bff; display: block; }
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin: 5px;
+            display: inline-block;
+            word-wrap: break-word;
+        }
 
-.audio-container {
-    display: flex; align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-top: 5px;
-}
+        .self {
+            background: #dcf8c6;
+            align-self: flex-end;
+        }
 
-.join-message {
-    text-align: center; color: gray; font-size: 0.9rem;
-    margin: 5px 0;
-}
+        .other {
+            background: #eaeaea;
+            align-self: flex-start;
+        }
 
-#message-input {
-    display: flex; align-items: center;
-    padding: 10px; background: white;
-}
-input {
-    flex: 1; padding: 10px;
-    border: 1px solid #ddd; border-radius: 5px;
-}
+        .username {
+            font-weight: bold;
+            color: #007bff;
+            display: block;
+        }
 
-.buttons {
-    display: flex; align-items: center; gap: 5px;
-}
-button {
-    padding: 8px 10px; border: none;
-    background: #28a745; color: white;
-    border-radius: 5px; cursor: pointer;
-}
+        .audio-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 5px;
+        }
 
-button:hover { background: #218838; }
-.icon-btn { font-size: 1.2rem; background: none; color: #007bff; cursor: pointer; border: none; }
+        .join-message {
+            text-align: center;
+            color: gray;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
 
-#file-input { display: none; }
+        #message-input {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+        }
 
-#chat-header {
-    position: sticky;
-    top: 0;
-    z-index: 10; /* Ensures it stays above other elements */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    max-width: 500px;
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    padding: 12px 15px;
-    border-radius: 10px 10px 0 0;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-}
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
 
+        .buttons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-#users-menu-btn {
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    font-size: 16px;
-}
+        button {
+            padding: 8px 10px;
+            border: none;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-#users-menu-btn:hover {
-    background: rgba(255, 255, 255, 0.4);
-}
+        button:hover {
+            background: #218838;
+        }
 
-#user-list-container {
-    position: absolute;
-    top: 60px;
-    right: 10px;
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    width: 220px;
-    display: none;
-    z-index: 100;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease-in-out;
-    animation: fadeIn 0.3s ease-in-out;
-}
+        .icon-btn {
+            font-size: 1.2rem;
+            background: none;
+            color: #007bff;
+            cursor: pointer;
+            border: none;
+        }
 
-#user-list-container h3 {
-    font-size: 16px;
-    color: #007bff;
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: bold;
-}
+        #file-input {
+            display: none;
+        }
 
-#user-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#user-list li {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 5px;
-    background: #f8f9fa;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#user-list li::before {
-    content: "👤"; /* User icon */
-    font-size: 16px;
-    color: #007bff;
-}
-
-.hidden {
-    display: none;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-@media (max-width: 600px) {
-    .chat-container {
-        width: 100%;
-        height: 100dvh; /* Dynamic viewport height */
-        border-radius: 0;
-        left: 0;
-        top: 0;
-        position: fixed; /* Prevent dragging */
-        display: flex;
-        flex-direction: column;
-    }
-
-    #chat-header {
-        position: sticky;
-        top: 0; /* Ensure it stays fixed at the top */
-        z-index: 10; /* Make sure it stays above messages */
-        width: 100%;
-        border-radius: 0;
-        flex-shrink: 0; /* Prevent shrinking */
-    }
-
-    #messages {
-        flex: 1;
-        overflow-y: auto;
-        padding-bottom: 60px; /* Ensure space for input box */
-        scroll-behavior: smooth; /* Smooth scrolling */
-    }
-
-    #message-input {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 8px;
-        background: white;
-        position: fixed;
-        bottom: 0; /* Keep it above the keyboard */
-        left: 0;
-        border-top: 1px solid #ddd;
-    }
-
-    input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-
-    .buttons {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    button {
-        padding: 6px 8px;
-    }
-}
+        #chat-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            /* Ensures it stays above other elements */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            padding: 12px 15px;
+            border-radius: 10px 10px 0 0;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
 
 
+        #users-menu-btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        #users-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #user-list-container {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            width: 220px;
+            display: none;
+            z-index: 100;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease-in-out;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        #user-list-container h3 {
+            font-size: 16px;
+            color: #007bff;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #user-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #user-list li {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #user-list li::before {
+            content: "👤";
+            /* User icon */
+            font-size: 16px;
+            color: #007bff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .chat-container {
+                width: 100%;
+                height: 100dvh;
+                /* Dynamic viewport height */
+                border-radius: 0;
+                left: 0;
+                top: 0;
+                position: fixed;
+                /* Prevent dragging */
+                display: flex;
+                flex-direction: column;
+            }
+
+            #chat-header {
+                position: sticky;
+                top: 0;
+                /* Ensure it stays fixed at the top */
+                z-index: 10;
+                /* Make sure it stays above messages */
+                width: 100%;
+                border-radius: 0;
+                flex-shrink: 0;
+                /* Prevent shrinking */
+            }
+
+            #messages {
+                flex: 1;
+                overflow-y: auto;
+                padding-bottom: 60px;
+                /* Ensure space for input box */
+                scroll-behavior: smooth;
+                /* Smooth scrolling */
+            }
+
+            #message-input {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                padding: 8px;
+                background: white;
+                position: fixed;
+                bottom: 0;
+                /* Keep it above the keyboard */
+                left: 0;
+                border-top: 1px solid #ddd;
+            }
+
+            input {
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+
+            .buttons {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            button {
+                padding: 6px 8px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 
     <div class="chat-container">
         <div id="chat-header">
-            <h2>Chatroom: <%= room %></h2>
+            <h2>Chatroom: <%= room %>
+            </h2>
             <button id="users-menu-btn">Users</button>
         </div>
-    
+
         <!-- Hidden User List -->
         <div id="user-list-container" class="hidden">
             <h3>Users in this room:</h3>
             <ul id="user-list"></ul>
+<p id="admin-info" style="text-align:center; font-weight:bold; color: red;"></p>
+
         </div>
         <div id="messages"></div>
         <div id="typing-indicator" class="join-message" style="display: none;"></div>
@@ -254,50 +331,51 @@ button:hover { background: #218838; }
             </div>
         </div>
     </div>
-    
-    
+
+
     <script>
         const socket = io();
         const room = "<%= room %>";
-        let username = "Anonymous";
+       // let username = "Anonymous";
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        
+        const username = "<%= username %>";
+
 
         function scrollToBottom() {
-    const messageContainer = document.getElementById("messages");
-    setTimeout(() => {
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-    }, 100); // Delay to ensure message is rendered before scrolling
-}
+            const messageContainer = document.getElementById("messages");
+            setTimeout(() => {
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }, 100); // Delay to ensure message is rendered before scrolling
+        }
         function joinChat() {
             socket.emit("joinRoom", { username, room });
         }
-        
+
         window.onload = function () {
-            setTimeout(() => {
-                username = prompt("Enter your name");
+           
+               
                 joinChat();
-            }, 1000);
+          
         };
-        
+
         socket.on("message", (msg) => {
-    const messageContainer = document.getElementById("messages");
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message", msg.username === username ? "self" : "other");
+            const messageContainer = document.getElementById("messages");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", msg.username === username ? "self" : "other");
 
-    if (msg.type === "text") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text}`;
-    } else if (msg.type === "file") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <a href="${msg.fileUrl}" target="_blank">Download File</a>`;
-    } else if (msg.type === "audio") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <div class='audio-container'><audio controls src="${msg.audioUrl}"></audio></div>`;
-    }
+            if (msg.type === "text") {
+                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text}`;
+            } else if (msg.type === "file") {
+                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <a href="${msg.fileUrl}" target="_blank">Download File</a>`;
+            } else if (msg.type === "audio") {
+                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <div class='audio-container'><audio controls src="${msg.audioUrl}"></audio></div>`;
+            }
 
-    messageContainer.appendChild(messageElement);
-    scrollToBottom(); // Ensure messages scroll to the bottom
-});
+            messageContainer.appendChild(messageElement);
+            scrollToBottom(); // Ensure messages scroll to the bottom
+        });
 
         socket.on("userJoined", (msg) => {
             const messageContainer = document.getElementById("messages");
@@ -309,12 +387,15 @@ button:hover { background: #218838; }
 
 
         socket.on("userleft", (msg) => {
-        const messageContainer = document.getElementById("messages");
-        const leaveElement = document.createElement("div");
-        leaveElement.classList.add("join-message");
-        leaveElement.textContent = msg;
-        messageContainer.appendChild(leaveElement);
-});
+            const messageContainer = document.getElementById("messages");
+            const leaveElement = document.createElement("div");
+            leaveElement.classList.add("join-message");
+            leaveElement.textContent = msg;
+            messageContainer.appendChild(leaveElement);
+        });
+
+      
+
 
 
         function sendMessage() {
@@ -327,92 +408,109 @@ button:hover { background: #218838; }
         }
 
         function toggleRecording() {
-    const voiceBtn = document.getElementById("voice-btn");
-    
-    if (!isRecording) {
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-            audioChunks = [];
-            mediaRecorder.start();
-            isRecording = true;
-            voiceBtn.textContent = "⏹";
+            const voiceBtn = document.getElementById("voice-btn");
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-        }).catch(error => {
-            console.error("Error accessing microphone:", error);
+            if (!isRecording) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+                    audioChunks = [];
+                    mediaRecorder.start();
+                    isRecording = true;
+                    voiceBtn.textContent = "⏹";
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                }).catch(error => {
+                    console.error("Error accessing microphone:", error);
+                });
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                voiceBtn.textContent = "🎤";
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+                    // Convert audio to Base64
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = function () {
+                        const base64Audio = reader.result;
+                        socket.emit("voiceMessage", { room, username, audioUrl: base64Audio });
+                    };
+                };
+            }
+        }
+
+        const messageInput = document.getElementById("message");
+        let typingTimeout;
+
+        messageInput.addEventListener("input", () => {
+            socket.emit("typing", room);
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.emit("stopTyping", room);
+            }, 1000); // Stop typing after 1 second of inactivity
         });
-    } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        voiceBtn.textContent = "🎤";
 
-        mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
-            // Convert audio to Base64
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = function () {
-                const base64Audio = reader.result;
-                socket.emit("voiceMessage", { room, username, audioUrl: base64Audio });
-            };
-        };
-    }
-}
-
-const messageInput = document.getElementById("message");
-let typingTimeout;
-
-messageInput.addEventListener("input", () => {
-    socket.emit("typing", room);
-    
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        socket.emit("stopTyping", room);
-    }, 1000); // Stop typing after 1 second of inactivity
-});
-
-socket.on("userTyping", (username) => {
-    const typingIndicator = document.getElementById("typing-indicator");
-    if (!typingIndicator) {
-        const indicator = document.createElement("div");
-        indicator.id = "typing-indicator";
-        indicator.classList.add("join-message");
-        indicator.textContent = `${username} is typing...`;
-        document.getElementById("messages").appendChild(indicator);
-    }
-});
-
-socket.on("userStoppedTyping", () => {
-    const typingIndicator = document.getElementById("typing-indicator");
-    if (typingIndicator) typingIndicator.remove();
-});
-
-
-
-    document.getElementById("users-menu-btn").addEventListener("click", function() {
-        let userListContainer = document.getElementById("user-list-container");
-        userListContainer.style.display = userListContainer.style.display === "block" ? "none" : "block";
-    });
-
-    // Listen for updated user list from server
-    socket.on("updateUserList", (users) => {
-        const userList = document.getElementById("user-list");
-        userList.innerHTML = ""; // Clear previous list
-
-        users.forEach(user => {
-            const userItem = document.createElement("li");
-            userItem.textContent = user;
-            userList.appendChild(userItem);
+        socket.on("userTyping", (username) => {
+            const typingIndicator = document.getElementById("typing-indicator");
+            if (!typingIndicator) {
+                const indicator = document.createElement("div");
+                indicator.id = "typing-indicator";
+                indicator.classList.add("join-message");
+                indicator.textContent = `${username} is typing...`;
+                document.getElementById("messages").appendChild(indicator);
+            }
         });
-    });
 
+      
+
+        socket.on("userStoppedTyping", () => {
+            const typingIndicator = document.getElementById("typing-indicator");
+            if (typingIndicator) typingIndicator.remove();
+        });
+
+
+
+        document.getElementById("users-menu-btn").addEventListener("click", function () {
+            let userListContainer = document.getElementById("user-list-container");
+            userListContainer.style.display = userListContainer.style.display === "block" ? "none" : "block";
+        });
+
+        // Listen for updated user list from server
+        socket.on("updateUserList", (users) => {
+            const userList = document.getElementById("user-list");
+            userList.innerHTML = ""; // Clear previous list
+
+            users.forEach(user => {
+                const userItem = document.createElement("li");
+                userItem.textContent = user;
+                userList.appendChild(userItem);
+            });
+        });
+        socket.on("updateRooms", (rooms) => {
+    console.log("Active Rooms List Updated: ", rooms);
+    updateRoomList(rooms); // Function jo UI update karta hai
+});
+
+
+        socket.on("usernameExists", (message) => {
+        alert(message);
+        window.location.href = "/";
+    });
+      //  const username = "<%= username %>"; // Use username from server
+      if (!username) {
+        alert("Username is required!");
+        window.location.href = "/";
+    }
 
 
 
 
     </script>
 </body>
+
 </html>
