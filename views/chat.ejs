@@ -72,10 +72,13 @@ button:hover { background: #218838; }
 #file-input { display: none; }
 
 #chat-header {
+    position: sticky;
+    top: 0;
+    z-index: 10; /* Ensures it stays above other elements */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%; /* Ensure full width */
+    width: 100%;
     max-width: 500px;
     background: linear-gradient(135deg, #007bff, #0056b3);
     padding: 12px 15px;
@@ -84,6 +87,7 @@ button:hover { background: #218838; }
     font-size: 18px;
     font-weight: bold;
 }
+
 
 #users-menu-btn {
     padding: 8px 12px;
@@ -175,6 +179,7 @@ button:hover { background: #218838; }
     }
 
     #chat-header {
+        position: sticky;
         width: 100%;
         border-radius: 0;
         flex-shrink: 0; /* Prevent shrinking */
