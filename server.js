@@ -49,14 +49,22 @@ io.on("connection", (socket) => {
 
     socket.on("joinRoom", ({ username, room }) => {
         socket.join(room);
-        socket.username = username; // Store username in socket
-        socket.room = room; // Store room in socket
+        socket.username = username;
+        socket.room = room;
+    
         if (!chatRooms[room]) chatRooms[room] = new Set();
         chatRooms[room].add(username);
-
+    
+        // Notify users in the room
         io.to(room).emit("userJoined", `${username} joined the chat`);
-        io.emit("updateRooms", Object.keys(chatRooms)); // Update room list for all users
+    
+        // Send updated user list to all users in the room
+        io.to(room).emit("updateUserList", Array.from(chatRooms[room]));
+    
+        // Send updated room list to all users
+        io.emit("updateRooms", Object.keys(chatRooms));
     });
+    
 
     socket.on("chatMessage", ({ room, username, message }) => {
         io.to(room).emit("message", {
@@ -99,20 +107,22 @@ io.on("connection", (socket) => {
     
         if (username && userRoom && chatRooms[userRoom]) {
             chatRooms[userRoom].delete(username);
+    
+            // Notify users about the user leaving
             io.to(userRoom).emit("userleft", `${username} left the chat`);
-            
-            if (chatRooms[userRoom].size === 0) { 
-                console.log(`Deleting empty room: ${userRoom}`);
+    
+            // Send updated user list to all users in the room
+            io.to(userRoom).emit("updateUserList", Array.from(chatRooms[userRoom]));
+    
+            // If the room is empty, delete it
+            if (chatRooms[userRoom].size === 0) {
                 delete chatRooms[userRoom];
-                console.log(`Room ${userRoom} deleted`);
-            } else {
-                console.log(`Room ${userRoom} is not empty, not deleting`);
             }
     
             io.emit("updateRooms", Object.keys(chatRooms));
-            console.log(`User disconnected: ${username} from room: ${userRoom}`);
         }
     });
+    
     
     
     
