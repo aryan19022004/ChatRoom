@@ -169,7 +169,7 @@ button:hover { background: #218838; }
 @media (max-width: 600px) {
     .chat-container {
         width: 100%;
-        height: 100dvh; /* Use dynamic viewport height for better mobile support */
+        height: 100dvh; /* Dynamic viewport height */
         border-radius: 0;
         left: 0;
         top: 0;
@@ -180,6 +180,8 @@ button:hover { background: #218838; }
 
     #chat-header {
         position: sticky;
+        top: 0; /* Ensure it stays fixed at the top */
+        z-index: 10; /* Make sure it stays above messages */
         width: 100%;
         border-radius: 0;
         flex-shrink: 0; /* Prevent shrinking */
@@ -188,6 +190,8 @@ button:hover { background: #218838; }
     #messages {
         flex: 1;
         overflow-y: auto;
+        padding-bottom: 60px; /* Ensure space for input box */
+        scroll-behavior: smooth; /* Smooth scrolling */
     }
 
     #message-input {
@@ -219,7 +223,6 @@ button:hover { background: #218838; }
         padding: 6px 8px;
     }
 }
-
 
 
     </style>
@@ -261,6 +264,13 @@ button:hover { background: #218838; }
         let audioChunks = [];
         let isRecording = false;
         
+
+        function scrollToBottom() {
+    const messageContainer = document.getElementById("messages");
+    setTimeout(() => {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }, 100); // Delay to ensure message is rendered before scrolling
+}
         function joinChat() {
             socket.emit("joinRoom", { username, room });
         }
@@ -273,21 +283,21 @@ button:hover { background: #218838; }
         };
         
         socket.on("message", (msg) => {
-            const messageContainer = document.getElementById("messages");
-            const messageElement = document.createElement("div");
-            messageElement.classList.add("message", msg.username === username ? "self" : "other");
-            
-            if (msg.type === "text") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text}`;
-            } else if (msg.type === "file") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <a href="${msg.fileUrl}" target="_blank">Download File</a>`;
-            } else if (msg.type === "audio") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <div class='audio-container'><audio controls src="${msg.audioUrl}"></audio></div>`;
-            }
-            
-            messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        });
+    const messageContainer = document.getElementById("messages");
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message", msg.username === username ? "self" : "other");
+
+    if (msg.type === "text") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text}`;
+    } else if (msg.type === "file") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <a href="${msg.fileUrl}" target="_blank">Download File</a>`;
+    } else if (msg.type === "audio") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <div class='audio-container'><audio controls src="${msg.audioUrl}"></audio></div>`;
+    }
+
+    messageContainer.appendChild(messageElement);
+    scrollToBottom(); // Ensure messages scroll to the bottom
+});
 
         socket.on("userJoined", (msg) => {
             const messageContainer = document.getElementById("messages");
