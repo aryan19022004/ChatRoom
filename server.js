@@ -101,8 +101,12 @@ io.on("connection", (socket) => {
             chatRooms[userRoom].delete(username);
             io.to(userRoom).emit("userleft", `${username} left the chat`);
             
-            if (chatRooms[userRoom].size === 0) {
+            if (chatRooms[userRoom].size === 0) { 
+                console.log(`Deleting empty room: ${userRoom}`);
                 delete chatRooms[userRoom];
+                console.log(`Room ${userRoom} deleted`);
+            } else {
+                console.log(`Room ${userRoom} is not empty, not deleting`);
             }
     
             io.emit("updateRooms", Object.keys(chatRooms));
