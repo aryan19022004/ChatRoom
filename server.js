@@ -17,35 +17,35 @@ mongoose.connect("mongodb+srv://at7123029:19feb2004@cluster0.2m06u.mongodb.net/c
 }).then(() => {
     console.log("MongoDB Connected");
 
-    // ⬇️ Change Stream ko MongoDB connect hone ke baad initialize karna hai
+    // ⬇ Change Stream ko MongoDB connect hone ke baad initialize karna hai
     const chatRoomChangeStream = ChatRoom.watch(); // Watch for changes in the collection
-
-    chatRoomChangeStream.on("change", async (change) => {
-        if (change.operationType === "delete") {
-            const deletedRoomId = change.documentKey._id; // Get deleted room ID
-
-            const deletedRoom = await ChatRoom.findById(deletedRoomId).lean(); // Find room by ID
-            if (!deletedRoom) return; // Room not found, exit
-
-            const deletedRoomName = deletedRoom.name; // Now we have the actual room name
-
-            console.log(`⚠️ Room deleted: ${deletedRoomName}`);
-
-            // Emit event to all users in that room
-            io.to(deletedRoomName).emit("roomDeleted", "This chatroom has been deleted!");
-
-            // Force users to leave
-            io.sockets.adapter.rooms.get(deletedRoomName)?.forEach((socketId) => {
-                const socket = io.sockets.sockets.get(socketId);
-                if (socket) {
-                    socket.leave(deletedRoomName);
-                    socket.emit("forceDisconnect", "Room has been deleted!");
-                }
-            });
-
-            io.emit("updateRooms", await ChatRoom.find({ users: { $ne: [] } }).distinct("name"));
-        }
-    });
+  
+      chatRoomChangeStream.on("change", async (change) => {
+          if (change.operationType === "delete") {
+              const deletedRoomId = change.documentKey._id; // Get deleted room ID
+  
+              const deletedRoom = await ChatRoom.findById(deletedRoomId).lean(); // Find room by ID
+              if (!deletedRoom) return; // Room not found, exit
+  
+              const deletedRoomName = deletedRoom.name; // Now we have the actual room name
+  
+              console.log(` Room deleted: ${deletedRoomName}`);
+  
+              // Emit event to all users in that room
+              io.to(deletedRoomName).emit("roomDeleted", "This chatroom has been deleted!");
+  
+              // Force users to leave
+              io.sockets.adapter.rooms.get(deletedRoomName)?.forEach((socketId) => {
+                  const socket = io.sockets.sockets.get(socketId);
+                  if (socket) {
+                      socket.leave(deletedRoomName);
+                      socket.emit("forceDisconnect", "Room has been deleted!");
+                  }
+              });
+  
+              io.emit("updateRooms", await ChatRoom.find({ users: { $ne: [] } }).distinct("name"));
+          }
+      });
 
 }).catch(err => console.log(err));
 
@@ -83,18 +83,30 @@ app.get("/", async (req, res) => {
 
 
 app.get("/chat/:room", async (req, res) => {
-    const roomName = req.params.room;
-    const username = req.query.username || ""; //  Get username from query
+    try {
+        const roomName = req.params.room;
+        let username = req.query.username;
 
-    let room = await ChatRoom.findOne({ name: roomName });
+        if (!username) {
+            return res.render("usernamePrompt", { room: roomName }); // ✅ User ka naam puchhne ka form dikhao
+        }
 
-    if (!room) {
-        room = new ChatRoom({ name: roomName, users: [] }); //  Ensure users array is empty
-        await room.save();
+        let room = await ChatRoom.findOne({ name: roomName });
+
+        if (!room) {
+            room = new ChatRoom({ name: roomName, users: [] });
+            await room.save();
+        }
+
+        res.render("chat", { room: roomName, username });
+    } catch (error) {
+        console.error("Error loading chat room:", error);
+        res.status(500).send("Something went wrong!");
     }
-
-    res.render("chat", { room: roomName, username }); //  Send username to frontend
 });
+
+
+
 
 
 
@@ -208,6 +220,11 @@ io.on("connection", (socket) => {
         });
     });
 
+    socket.on("messageSeen", ({ room, messageId, seenBy }) => {
+        // Broadcast karo sender ko ki message seen ho gaya
+        socket.to(room).emit("updateSeenStatus", { messageId, seenBy });
+    });
+
     socket.on("voiceMessage", ({ room, username, audioUrl }) => {
         io.to(room).emit("message", {
             type: "audio",
@@ -218,14 +235,14 @@ io.on("connection", (socket) => {
     socket.on("disconnect", async () => {
         const username = socket.username;
         const userRoom = socket.room;
-    
+
         if (username && userRoom) {
             let chatRoom = await ChatRoom.findOne({ name: userRoom });
-    
+
             if (chatRoom) {
                 // ❌ Galti: Yeh pura list empty kar sakta hai
                 chatRoom.users = chatRoom.users.filter(user => user !== username);
-    
+
                 // Agar users bach gaye hain to update karo, warna room delete mat karo bina check kiye
                 if (chatRoom.users.length > 0) {
                     await chatRoom.save(); // ✅ Room ko save karna zaroori hai taaki update ho
@@ -233,16 +250,16 @@ io.on("connection", (socket) => {
                 } else {
                     await ChatRoom.deleteOne({ name: userRoom }); // ✅ Sirf tab delete karo jab koi user na ho
                 }
-    
+
                 io.to(userRoom).emit("userleft", `${username} left the chat`);
             }
-    
+
             // ✅ Active rooms ka update sirf tab bhejo jab room exist kare
             const activeRooms = await ChatRoom.find({ users: { $ne: [] } }).distinct("name");
             io.emit("updateRooms", activeRooms);
         }
     });
-    
+
 
 
 
