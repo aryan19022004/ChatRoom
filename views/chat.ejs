@@ -308,17 +308,24 @@
         <div id="chat-header">
             <h2>Chatroom: <%= room %>
             </h2>
+            <button id="copyRoomLink">Copy Room Link</button>
             <button id="users-menu-btn">Users</button>
         </div>
 
         <!-- Hidden User List -->
         <div id="user-list-container" class="hidden">
             <h3>Users in this room:</h3>
+
             <ul id="user-list"></ul>
 <p id="admin-info" style="text-align:center; font-weight:bold; color: red;"></p>
 
         </div>
-        <div id="messages"></div>
+        <div id="messages">
+            
+             
+            
+            
+        </div>
         <div id="typing-indicator" class="join-message" style="display: none;"></div>
 
         <div id="message-input">
@@ -342,6 +349,26 @@
         let isRecording = false;
         const username = "<%= username %>";
 
+        
+        document.getElementById("copyRoomLink").addEventListener("click", () => {
+        const roomName = "<%= room %>"; // Room ka naam EJS se le rahe hain
+        const roomLink = `${window.location.origin}/chat/${roomName}`; // Username exclude kiya
+        
+        navigator.clipboard.writeText(roomLink).then(() => {
+            alert("Room link copied!");
+        }).catch(err => console.error("Error copying link: ", err));
+    });
+
+    // Agar user bina username ke aaya, toh prompt dikhao
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has("username")) {
+            const username = prompt("Enter your username:");
+            if (username) {
+                window.location.href = `${window.location.pathname}?username=${username}`;
+            }
+        }
+    });
 
         function scrollToBottom() {
             const messageContainer = document.getElementById("messages");
@@ -361,21 +388,25 @@
         };
 
         socket.on("message", (msg) => {
-            const messageContainer = document.getElementById("messages");
-            const messageElement = document.createElement("div");
-            messageElement.classList.add("message", msg.username === username ? "self" : "other");
+    const messageContainer = document.getElementById("messages");
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message", msg.username === username ? "self" : "other");
 
-            if (msg.type === "text") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text}`;
-            } else if (msg.type === "file") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <a href="${msg.fileUrl}" target="_blank">Download File</a>`;
-            } else if (msg.type === "audio") {
-                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> <div class='audio-container'><audio controls src="${msg.audioUrl}"></audio></div>`;
-            }
+    let seenStatus = msg.seen ? "✅ Seen" : "";
 
-            messageContainer.appendChild(messageElement);
-            scrollToBottom(); // Ensure messages scroll to the bottom
-        });
+    if (msg.type === "text") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text} <br> 
+        <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
+    } else if (msg.type === "file") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
+        <a href="${msg.fileUrl}" target="_blank">Download File</a> <br> 
+        <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
+    }
+
+    messageContainer.appendChild(messageElement);
+    scrollToBottom(); 
+});
+
 
         socket.on("userJoined", (msg) => {
             const messageContainer = document.getElementById("messages");
@@ -455,6 +486,10 @@
             }, 1000); // Stop typing after 1 second of inactivity
         });
 
+     
+
+
+
         socket.on("userTyping", (username) => {
             const typingIndicator = document.getElementById("typing-indicator");
             if (!typingIndicator) {
@@ -495,6 +530,10 @@
     console.log("Active Rooms List Updated: ", rooms);
     updateRoomList(rooms); // Function jo UI update karta hai
 });
+// Function to check if an element is in viewport
+
+
+
 
 
         socket.on("usernameExists", (message) => {
