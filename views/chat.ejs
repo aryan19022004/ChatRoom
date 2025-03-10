@@ -425,6 +425,11 @@
             messageContainer.appendChild(leaveElement);
         });
 
+         socket.on("updateRooms", (rooms) => {
+            console.log("Active Rooms List Updated: ", rooms);
+            updateRoomList(rooms); // Function jo UI update karta hai
+        });
+
 
         function sendMessage() {
             const messageInput = document.getElementById("message");
