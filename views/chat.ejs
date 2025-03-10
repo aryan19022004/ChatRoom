@@ -350,7 +350,7 @@
         const username = "<%= username %>";
 
 
-              document.getElementById("file-input").addEventListener("change", function () {
+          /*    document.getElementById("file-input").addEventListener("change", function () {
             const file = this.files[0];
             if (!file) return;
 
@@ -360,7 +360,7 @@
                 socket.emit("fileMessage", { room, username, fileUrl: reader.result, fileType: file.type });
             };
         });
-    
+    */
         
         document.getElementById("copyRoomLink").addEventListener("click", () => {
          
@@ -419,7 +419,7 @@
         </audio> <br> 
         <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
     }
-   if (msg.type === "file") {
+  /* if (msg.type === "file") {
                 if (msg.fileType.startsWith("image")) {
                     messageElement.innerHTML = `<b>${msg.username}:</b><br><img src="${msg.fileUrl}" style="max-width:200px;"><br>`;
                 } else if (msg.fileType.startsWith("video")) {
@@ -427,7 +427,7 @@
                 } else if (msg.fileType === "application/pdf") {
                     messageElement.innerHTML = `<b>${msg.username}:</b><br><a href="${msg.fileUrl}" target="_blank">View PDF</a><br>`;
                 }
-            }
+            }*/
 
     messageContainer.appendChild(messageElement);
     scrollToBottom(); 
