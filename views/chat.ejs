@@ -410,10 +410,6 @@
     if (msg.type === "text") {
         messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text} <br> 
         <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
-    } else if (msg.type === "file") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
-        <a href="${msg.fileUrl}" target="_blank">Download File</a> <br> 
-        <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
     }
          else if (msg.type === "audio") {
         messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
