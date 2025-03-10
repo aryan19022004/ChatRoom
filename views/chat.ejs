@@ -350,7 +350,8 @@
         const username = "<%= username %>";
 
 
-         document.getElementById("file-input").addEventListener("change", function () {
+         document.getElementById("file-input").addEventListener("change", function (event) {
+         event.preventDefault(); 
     const file = this.files[0];
     if (!file) return;
 
