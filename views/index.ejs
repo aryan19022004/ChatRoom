@@ -106,19 +106,16 @@
             event.preventDefault();
             const room = document.getElementById("room").value.trim();
             let username = prompt("Enter your name:");
-    if (!username || username.trim() === "") {
-        alert("Username cannot be empty!");
-        return;
-    }
+            if (!username || username.trim() === "") {
+              alert("Username cannot be empty!");
+              return;
+             }
 
-    if (room) {
-        window.location.href = `/chat/${room}?username=${encodeURIComponent(username)}`;
-    }
-        });
+             if (room) {
+               window.location.href = `/chat/${room}?username=${encodeURIComponent(username)}`;
+               }
+            });
 
-
-     
-     
     function joinRoom(room) {
         let username = prompt("Enter your name:");
         
@@ -131,15 +128,11 @@
         window.location.href = `/chat/${room}?username=${encodeURIComponent(username)}`;
     }
 
+    socket.on("updateRooms", (rooms) => {
+     const roomList = document.querySelector(".room-list");
+     roomList.innerHTML = "";
 
-
-
-
-        socket.on("updateRooms", (rooms) => {
-    const roomList = document.querySelector(".room-list");
-    roomList.innerHTML = "";
-
-    rooms.forEach(room => {
+     rooms.forEach(room => {
         if (room.trim() !== "") {  // Ensure no empty room names appear
             const li = document.createElement("li");
             li.textContent = room;
