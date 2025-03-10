@@ -403,6 +403,14 @@
         <a href="${msg.fileUrl}" target="_blank">Download File</a> <br> 
         <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
     }
+         else if (msg.type === "audio") {
+        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
+        <audio controls>
+            <source src="${msg.audioUrl}" type="audio/webm">
+            Your browser does not support the audio element.
+        </audio> <br> 
+        <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
+    }
 
     messageContainer.appendChild(messageElement);
     scrollToBottom(); 
