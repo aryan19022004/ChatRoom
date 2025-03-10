@@ -354,6 +354,10 @@
          
     const file = this.files[0];
     if (!file) return;
+        if (file.size > 50 * 1024 * 1024) {
+        alert("File size limit exceeded! (Max: 50MB)");
+        event.target.value = ""; // File input clear kardo
+    }
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
