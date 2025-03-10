@@ -172,8 +172,10 @@ io.on("connection", (socket) => {
         socket.to(room).emit("userStoppedTyping", socket.username);
     });
 
+  
     socket.on("fileMessage", ({ room, username, fileUrl, fileType }) => {
-        io.to(room).emit("message", {
+        console.log("File received:", fileType); // Debugging ke liye
+        io.to(room).emit("message", { // Yeh line add ki
             type: "file",
             username: username,
             fileUrl: fileUrl,
