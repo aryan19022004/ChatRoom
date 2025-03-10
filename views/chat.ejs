@@ -350,22 +350,40 @@
         const username = "<%= username %>";
 
 
-         document.getElementById("file-input").addEventListener("change", function (event) {
-         
+      document.getElementById("file-input").addEventListener("change", function (event) {
     const file = this.files[0];
     if (!file) return;
-        if (file.size > 50 * 1024 * 1024) {
-        alert("File size limit exceeded! (Max: 50MB)");
-        event.target.value = ""; // File input clear kardo
-        return;
-    }
+
+    const CHUNK_SIZE = 64 * 1024; // 64KB ka ek chunk
+    let offset = 0;
+
+    socket.emit("file-upload-start", { 
+        name: file.name, 
+        size: file.size, 
+        type: file.type 
+    });
 
     const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = function () {
-        socket.emit("fileMessage", { room, username, fileUrl: reader.result, fileType: file.type });
+
+    reader.onload = function (e) {
+        socket.emit("file-chunk", { 
+            name: file.name, 
+            data: e.target.result 
+        });
+
+        offset += CHUNK_SIZE;
+        if (offset < file.size) readNextChunk(); 
+        else socket.emit("file-upload-end", { name: file.name }); 
     };
+
+    function readNextChunk() {
+        const slice = file.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+    }
+
+    readNextChunk();
 });
+
         
         document.getElementById("copyRoomLink").addEventListener("click", () => {
          
