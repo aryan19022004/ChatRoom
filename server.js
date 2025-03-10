@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    maxHttpBufferSize: 50 * 1024 * 1024, // 10MB limit set kiya
+    maxHttpBufferSize: 400 * 1024 * 1024, // 10MB limit set kiya
 });
 
 
