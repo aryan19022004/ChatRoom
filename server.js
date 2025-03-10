@@ -50,8 +50,6 @@ mongoose.connect("mongodb+srv://at7123029:19feb2004@cluster0.2m06u.mongodb.net/c
 }).catch(err => console.log(err));
 
 
-
-
 const ChatRoomSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
 
@@ -88,7 +86,7 @@ app.get("/chat/:room", async (req, res) => {
         let username = req.query.username;
 
         if (!username) {
-            return res.render("usernamePrompt", { room: roomName }); // ✅ User ka naam puchhne ka form dikhao
+            return res.render("usernamePrompt", { room: roomName }); //  User ka naam puchhne ka form dikhao
         }
 
         let room = await ChatRoom.findOne({ name: roomName });
@@ -104,13 +102,6 @@ app.get("/chat/:room", async (req, res) => {
         res.status(500).send("Something went wrong!");
     }
 });
-
-
-
-
-
-
-
 
 // Handle file uploads
 app.post("/upload", upload.single("file"), (req, res) => {
@@ -139,7 +130,7 @@ io.on("connection", (socket) => {
                 console.log("Existing users in room before adding:", chatRoom.users);
 
                 if (chatRoom.users.includes(username)) {
-                    console.log("🚨 Username already exists in this room! Rejecting...");
+                    console.log(" Username already exists in this room! Rejecting...");
                     socket.emit("usernameExists", "This username is already taken in this room.");
                     return;
                 }
@@ -149,7 +140,7 @@ io.on("connection", (socket) => {
             chatRoom.users.push(username);
             await chatRoom.save();
 
-            console.log("✅ User added successfully. Updated users list:", chatRoom.users);
+            console.log(" User added successfully. Updated users list:", chatRoom.users);
 
             socket.join(room);
             socket.username = username;
@@ -160,36 +151,9 @@ io.on("connection", (socket) => {
             io.emit("updateRooms", await ChatRoom.find().distinct("name"));
 
         } catch (error) {
-            console.error("❌ Error in joinRoom event:", error);
+            console.error(" Error in joinRoom event:", error);
         }
     });
-
-
-
-
-
-    socket.on("kickUser", async ({ room, userToKick }) => {
-        let chatRoom = await ChatRoom.findOne({ name: room });
-
-        if (chatRoom && chatRoom.admin === socket.username) { // Ensure only admin can kick
-            if (chatRoom.users.includes(userToKick)) {
-                chatRoom.users = chatRoom.users.filter(user => user !== userToKick);
-                await chatRoom.save();
-
-                // Notify the kicked user
-                const kickedSocket = [...io.sockets.sockets.values()].find(s => s.username === userToKick);
-                if (kickedSocket) {
-                    kickedSocket.leave(room);
-                    kickedSocket.emit("kicked", "You have been removed from the chatroom.");
-                }
-
-                // Notify the remaining users
-                io.to(room).emit("updateUserList", { users: chatRoom.users, admin: chatRoom.admin });
-            }
-        }
-    });
-
-
 
 
     socket.on("chatMessage", ({ room, username, message }) => {
@@ -207,9 +171,6 @@ io.on("connection", (socket) => {
     socket.on("stopTyping", (room) => {
         socket.to(room).emit("userStoppedTyping", socket.username);
     });
-
-
-
 
     socket.on("fileMessage", ({ room, username, fileUrl, fileType }) => {
         io.to(room).emit("message", {
@@ -240,32 +201,25 @@ io.on("connection", (socket) => {
             let chatRoom = await ChatRoom.findOne({ name: userRoom });
 
             if (chatRoom) {
-                // ❌ Galti: Yeh pura list empty kar sakta hai
+                //  Galti: Yeh pura list empty kar sakta hai
                 chatRoom.users = chatRoom.users.filter(user => user !== username);
 
                 // Agar users bach gaye hain to update karo, warna room delete mat karo bina check kiye
                 if (chatRoom.users.length > 0) {
-                    await chatRoom.save(); // ✅ Room ko save karna zaroori hai taaki update ho
+                    await chatRoom.save(); //  Room ko save karna zaroori hai taaki update ho
                     io.to(userRoom).emit("updateUserList", chatRoom.users);
                 } else {
-                    await ChatRoom.deleteOne({ name: userRoom }); // ✅ Sirf tab delete karo jab koi user na ho
+                    await ChatRoom.deleteOne({ name: userRoom }); //  Sirf tab delete karo jab koi user na ho
                 }
 
                 io.to(userRoom).emit("userleft", `${username} left the chat`);
             }
 
-            // ✅ Active rooms ka update sirf tab bhejo jab room exist kare
+            //  Active rooms ka update sirf tab bhejo jab room exist kare
             const activeRooms = await ChatRoom.find({ users: { $ne: [] } }).distinct("name");
             io.emit("updateRooms", activeRooms);
         }
     });
-
-
-
-
-
-
-
 
 });
 
