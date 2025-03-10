@@ -355,7 +355,7 @@
         const roomLink = `${window.location.origin}/chat/${roomName}`; // Username exclude kiya
         
         navigator.clipboard.writeText(roomLink).then(() => {
-            alert("Room link copied!");
+           
         }).catch(err => console.error("Error copying link: ", err));
     });
 
