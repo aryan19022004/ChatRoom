@@ -425,9 +425,6 @@
             messageContainer.appendChild(leaveElement);
         });
 
-      
-
-
 
         function sendMessage() {
             const messageInput = document.getElementById("message");
@@ -486,10 +483,6 @@
             }, 1000); // Stop typing after 1 second of inactivity
         });
 
-     
-
-
-
         socket.on("userTyping", (username) => {
             const typingIndicator = document.getElementById("typing-indicator");
             if (!typingIndicator) {
@@ -507,8 +500,6 @@
             const typingIndicator = document.getElementById("typing-indicator");
             if (typingIndicator) typingIndicator.remove();
         });
-
-
 
         document.getElementById("users-menu-btn").addEventListener("click", function () {
             let userListContainer = document.getElementById("user-list-container");
@@ -532,10 +523,6 @@
 });
 // Function to check if an element is in viewport
 
-
-
-
-
         socket.on("usernameExists", (message) => {
         alert(message);
         window.location.href = "/";
@@ -545,9 +532,6 @@
         alert("Username is required!");
         window.location.href = "/";
     }
-
-
-
 
     </script>
 </body>
