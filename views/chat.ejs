@@ -317,14 +317,14 @@
             <h3>Users in this room:</h3>
 
             <ul id="user-list"></ul>
-<p id="admin-info" style="text-align:center; font-weight:bold; color: red;"></p>
+            <p id="admin-info" style="text-align:center; font-weight:bold; color: red;"></p>
 
         </div>
         <div id="messages">
-            
-             
-            
-            
+
+
+
+
         </div>
         <div id="typing-indicator" class="join-message" style="display: none;"></div>
 
@@ -333,7 +333,7 @@
             <div class="buttons">
                 <button onclick="sendMessage()">Send</button>
                 <button class="icon-btn" onclick="document.getElementById('file-input').click()">📎</button>
-                <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.gif,.pdf,.mp3,.mp4">
+                <input type="file" id="file-input" accept="image/*" capture="environment">
                 <button class="icon-btn" id="voice-btn" onclick="toggleRecording()">🎤</button>
             </div>
         </div>
@@ -343,51 +343,48 @@
     <script>
         const socket = io();
         const room = "<%= room %>";
-       // let username = "Anonymous";
+        // let username = "Anonymous";
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
         const username = "<%= username %>";
-
-
-      document.getElementById("file-input").addEventListener("change", function (event) {
-         
-    const file = this.files[0];
-    if (!file) return;
-        if (file.size > 400 * 1024 * 1024) {
-        alert("File size limit exceeded! (Max: 50MB)");
-        event.target.value = ""; // File input clear kardo
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = function () {
-        socket.emit("fileMessage", { room, username, fileUrl: reader.result, fileType: file.type });
-    };
-}); 
-
-        
-        document.getElementById("copyRoomLink").addEventListener("click", () => {
-         
-        const roomName = "<%= room %>"; // Room ka naam EJS se le rahe hain
-        const roomLink = `${window.location.origin}/chat/${roomName}`; // Username exclude kiya
-        
-        navigator.clipboard.writeText(roomLink).then(() => {
-           
-        }).catch(err => console.error("Error copying link: ", err));
-    });
-
-    // Agar user bina username ke aaya, toh prompt dikhao
-   /* document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (!urlParams.has("username")) {
-            const username = prompt("Enter your username:");
-            if (username) {
-                window.location.href = `${window.location.pathname}?username=${username}`;
+        const visibility = urlParams.get("visibility") || "public";
+         console.log(visibility,"this is the visibility of the room named as  :",room)
+
+
+        document.getElementById("file-input").addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function () {
+                socket.emit("fileMessage", { room, username, fileUrl: reader.result, fileType: file.type });
+            };
+        });
+
+
+        document.getElementById("copyRoomLink").addEventListener("click", () => {
+            alert("link copying");
+            const roomName = "<%= room %>"; // Room ka naam EJS se le rahe hain
+            const roomLink = `${window.location.origin}/chat/${roomName}`; // Username exclude kiya
+
+            navigator.clipboard.writeText(roomLink).then(() => {
+                alert("link copied");
+            }).catch(err => console.error("Error copying link: ", err));
+        });
+
+        // Agar user bina username ke aaya, toh prompt dikhao
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has("username")) {
+                const username = prompt("Enter your username:");
+                if (username) {
+                    window.location.href = `${window.location.pathname}?username=${username}`;
+                }
             }
-        }
-    });*/
+        });
 
         function scrollToBottom() {
             const messageContainer = document.getElementById("messages");
@@ -396,50 +393,64 @@
             }, 100); // Delay to ensure message is rendered before scrolling
         }
         function joinChat() {
-            socket.emit("joinRoom", { username, room });
+            socket.emit("joinRoom", { username, room, visibility });
+        }
+        function updateRoomList(rooms) {
+            const roomList = document.querySelector(".room-list");
+            if (!roomList) return;      // ← bail out if there's no room-list element
+            roomList.innerHTML = "";
+            rooms.forEach(r => {
+                if (!r.trim()) return;
+                const li = document.createElement("li");
+                li.textContent = r;
+                li.onclick = () => joinRoom(r);
+                roomList.appendChild(li);
+            });
         }
 
+
+
+
         window.onload = function () {
-           
-               
-                joinChat();
-          
+
+
+            joinChat();
+
         };
 
         socket.on("message", (msg) => {
-    const messageContainer = document.getElementById("messages");
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message", msg.username === username ? "self" : "other");
+            const messageContainer = document.getElementById("messages");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", msg.username === username ? "self" : "other");
 
-    let seenStatus = msg.seen ? "✅ Seen" : "";
+            let seenStatus = msg.seen ? "✅ Seen" : "";
 
-    if (msg.type === "text") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text} <br> 
+            if (msg.type === "text") {
+                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> ${msg.text} <br> 
         <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
-    }
-         else if (msg.type === "audio") {
-        messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
+            } else if (msg.type === "file") {
+                if (msg.fileType.startsWith("image")) {
+                    messageElement.innerHTML = `<b>${msg.username}:</b><br><img src="${msg.fileUrl}" style="max-width:200px;"><br>`;
+                } else if (msg.fileType.startsWith("video")) {
+                    messageElement.innerHTML = `<b>${msg.username}:</b><br><video controls width="200"><source src="${msg.fileUrl}" type="${msg.fileType}"></video><br>`;
+                } else if (msg.fileType === "application/pdf") {
+                    messageElement.innerHTML = `<b>${msg.username}:</b><br><a href="${msg.fileUrl}" target="_blank">View PDF</a><br>`;
+                } else {
+                    messageElement.innerHTML = `<b>${msg.username}:</b><br><a href="${msg.fileUrl}" download>Download File</a><br>`;
+                }
+            }
+            else if (msg.type === "audio") {
+                messageElement.innerHTML = `<span class='username'>${msg.username}:</span> 
         <audio controls>
             <source src="${msg.audioUrl}" type="audio/webm">
             Your browser does not support the audio element.
         </audio> <br> 
         <small class='seen-status' id="seen-${msg.id}">${seenStatus}</small>`;
-    }
- else if (msg.type === "file") {
-        if (msg.fileType.startsWith("image")) {
-            messageElement.innerHTML = `<b>${msg.username}:</b><br><img src="${msg.fileUrl}" style="max-width:200px;"><br>`;
-        } else if (msg.fileType.startsWith("video")) {
-            messageElement.innerHTML = `<b>${msg.username}:</b><br><video controls width="200"><source src="${msg.fileUrl}" type="${msg.fileType}"></video><br>`;
-        } else if (msg.fileType === "application/pdf") {
-            messageElement.innerHTML = `<b>${msg.username}:</b><br><a href="${msg.fileUrl}" target="_blank">View PDF</a><br>`;
-        } else {
-            messageElement.innerHTML = `<b>${msg.username}:</b><br><a href="${msg.fileUrl}" download>Download File</a><br>`;
-        }
-    }
+            }
 
-    messageContainer.appendChild(messageElement);
-    scrollToBottom(); 
-});
+            messageContainer.appendChild(messageElement);
+            scrollToBottom();
+        });
 
 
         socket.on("userJoined", (msg) => {
@@ -459,7 +470,10 @@
             messageContainer.appendChild(leaveElement);
         });
 
-        
+        socket.on("updateRooms", (rooms) => {
+            console.log("Active Rooms List Updated: ", rooms);
+            updateRoomList(rooms); // Function jo UI update karta hai
+        });
 
 
         function sendMessage() {
@@ -530,7 +544,7 @@
             }
         });
 
-      
+
 
         socket.on("userStoppedTyping", () => {
             const typingIndicator = document.getElementById("typing-indicator");
@@ -552,20 +566,18 @@
                 userItem.textContent = user;
                 userList.appendChild(userItem);
             });
-        });
 
-      
-
+        })
 
         socket.on("usernameExists", (message) => {
-        alert(message);
-        window.location.href = "/";
-    });
-      //  const username = "<%= username %>"; // Use username from server
-      if (!username) {
-        alert("Username is required!");
-        window.location.href = "/";
-    }
+            alert(message);
+            window.location.href = "/";
+        });
+        //  const username = "<%= username %>"; // Use username from server
+        if (!username) {
+            alert("Username is required!");
+            window.location.href = "/";
+        }
 
     </script>
 </body>
